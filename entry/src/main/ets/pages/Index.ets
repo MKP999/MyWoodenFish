@@ -1,13 +1,8 @@
 import { audio } from '@kit.AudioKit'
 import { media } from '@kit.MediaKit'
 import { BusinessError } from '@kit.BasicServicesKit'
-import testNapi from 'libentry.so'  // 导入so
-import data_preferences from '@ohos.data.preferences';
-
-interface woodfishItem {
-  id: number
-  image: Resource
-}
+import { ZenQuote, zenQuotes } from '../common/ZenQuotes'
+import { avList, woodfishList, woodfishItem } from '../common/ResourceData'
 
 @Entry
 @Component
@@ -23,33 +18,24 @@ struct Index {
   @State currentTabIndex: number = 0  // 改名避免冲突 0手动 1自动
   @State autoPlayInterval: number = 1  // 自动播放间隔（秒），默认1秒
   @State currentAVIndex: number = 0
+  // 在 Index struct 中添加点击计数状态
+  @State clickCount: number = 0
+  @State currentQuote: ZenQuote = zenQuotes[0]
   private isClickable: boolean = true
   private autoPlayTimer: number = -1    // 添加定时器ID
   private soundPool: media.SoundPool | null = null
   private soundId: number = 0
   private streamId: number = 0
-  private avList: string[] = [
-    'https://img02.tuke88.com/newpreview_music/09/03/88/5c8aec3410f095551.mp3',
-    'https://img02.tuke88.com/newpreview_music/09/00/71/5c89465032f0c47285.mp3',
-    'https://img02.tuke88.com/newpreview_music/09/03/86/5c8ae9df2794690095.mp3',
-    'https://img02.tuke88.com/newpreview_music/09/03/86/5c8ae9d99b14456943.mp3',
-    'https://img02.tuke88.com/newpreview_music/09/03/88/5c8aec307bdd858225.mp3',
-    'https://dst-app-pubread.oss-cn-shenzhen.aliyuncs.com/mtc/app/images/lowcode/ji.mp3'
-  ]
-
-  // 在 Index struct 内添加木鱼数据数组
-  private woodfishList: woodfishItem[]  = [
-    { id: 0, image: $r('app.media.woodfish') },
-    { id: 1, image: $r('app.media.woodfish1') },
-    { id: 2, image: $r('app.media.dog') },
-    { id: 3, image: $r('app.media.pig') },
-    { id: 4, image: $r('app.media.ji') }
-  ]
 
   avPlayer: media.AVPlayer = null!
 
-  // 在 Index struct 中添加点击计数状态
-  @State clickCount: number = 0
+  
+
+  // 随机获取一句禅语
+  private getRandomQuote(): void {
+    const index = Math.floor(Math.random() * zenQuotes.length)
+    this.currentQuote = zenQuotes[index]
+  }
 
   async  aboutToAppear() {
 
@@ -67,38 +53,31 @@ struct Index {
           break;
       }
     })
+
+    this.getRandomQuote()
   }
 
 
   // 播放音效
   private async playSound() {
-    this.avPlayer.url = this.avList[this.currentAVIndex]
+    this.avPlayer.url = avList[this.currentAVIndex]
+    this.avPlayer.setSpeed(6) // 1.5倍速
     setTimeout(() => {
       this.avPlayer.reset()
-    }, 500)
+    }, 400)
   }
 
   // 清理音频资源
   private async cleanupSound() {
-    if (!this.soundPool) return
-    
-    try {
-      if (this.streamId) {
-        await this.soundPool.stop(this.streamId)
+    if (this.avPlayer) {
+      try {
+        await this.avPlayer.stop()
+        await this.avPlayer.reset()
+        await this.avPlayer.release()
+        this.avPlayer = null!
+      } catch (error) {
+        console.error('Failed to cleanup AVPlayer:', error)
       }
-      if (this.soundId) {
-        await this.soundPool.unload(this.soundId)
-      }
-      
-      this.soundPool.off('loadComplete')
-      this.soundPool.off('playFinished')
-      this.soundPool.off('error')
-      
-      await this.soundPool.release()
-      this.soundPool = null
-    } catch (error) {
-      const err = error as BusinessError
-      console.error('Failed to cleanup sound:', err.message)
     }
   }
 
@@ -160,6 +139,11 @@ struct Index {
       this.showText = false
       this.isClickable = true
     }, 500)
+
+    // 随机切换禅语（可以设置一定概率切换）
+    if (Math.random() < 0.3) { // 30%的概率切换禅语
+      this.getRandomQuote()
+    }
   }
 
   // 开始自动播放
@@ -183,21 +167,6 @@ struct Index {
   @Builder
   settingsBuilder() {
     Column() {
-      // 标题栏
-      // Row() {
-      //   Text('设置')
-      //     .fontSize(20)
-      //     .fontColor('#FFFFFF')
-      //   Blank()
-      //   Image($r('app.media.close'))
-      //     .width(24)
-      //     .height(24)
-      //     .onClick(() => {
-      //       this.showPanel = false
-      //     })
-      // }
-      // .width('100%')
-      // .padding({ left: 16, right: 16, top: 8, bottom: 8 })
 
       // 设置内容
       Scroll() {
@@ -230,7 +199,7 @@ struct Index {
 
           // 木鱼选择部分
           Row() {
-            ForEach(this.woodfishList, (item: woodfishItem) => {
+            ForEach(woodfishList, (item: woodfishItem) => {
               Stack() {
                 // 背景和边框容器
                 Column()
@@ -256,7 +225,7 @@ struct Index {
                     console.info(`Selected woodfish ${item.id + 1}`)
                   })
               }
-              .margin({ right: item.id !== this.woodfishList.length - 1 ? 12 : 0 })
+              .margin({ right: item.id !== woodfishList.length - 1 ? 12 : 0 })
             }, (item: woodfishItem) => JSON.stringify(item))
           }
           .width('90%')
@@ -290,7 +259,7 @@ struct Index {
 
             Row() {
               // 1-5秒的选项
-              ForEach(this.avList, (av: string, index: number) => {
+              ForEach(avList, (av: string, index: number) => {
                 Column() {
                   // Text(index.toString())
                   //   .fontSize(16)
@@ -402,6 +371,24 @@ struct Index {
       .margin({ top: 50 })
       .zIndex(1)  // 确保显示在最上层
 
+       // 禅语展示
+    if (this.currentQuote) {
+      Column() {
+        Text(this.currentQuote.text)
+          .fontSize(14)
+          .fontColor('#666666')
+          .margin({ bottom: 4 })
+        Text(this.currentQuote.translation)
+          .fontSize(12)
+          .fontColor('#999999')
+          .margin({ bottom: 16 })
+      }
+      .position({x: 0, y: '85%'}) // 将禅语定位到底部
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+      .zIndex(1)  // 确保显示在最上层
+    }
+
       Stack() {
         Stack() {
           // 使用当前选中的木鱼图片
@@ -465,5 +452,6 @@ struct Index {
       .backgroundColor('#000000')
     }
     
+
   }
 }
