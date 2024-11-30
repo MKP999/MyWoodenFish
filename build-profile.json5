@@ -1,0 +1,55 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/makaipeng/.ohos/config/default_MyWoodenFish_qFdmVtRzyIFPMWVH7ue84pZ0CM-IZ-Dmaxdp8BioQgo=.cer",
+          "storePassword": "0000001B672183CE0AA7B7AF8FF66FEEB675AE50CB14A099221999A78532A328DBAFDAD33F865C3B6DBB80",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BC0CABD0D1E41C9618B2E0E29D6106740FF70B2DA7577DD27F8384AFC3EA1DAB79622D4230318E7",
+          "profile": "/Users/makaipeng/.ohos/config/default_MyWoodenFish_qFdmVtRzyIFPMWVH7ue84pZ0CM-IZ-Dmaxdp8BioQgo=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/makaipeng/.ohos/config/default_MyWoodenFish_qFdmVtRzyIFPMWVH7ue84pZ0CM-IZ-Dmaxdp8BioQgo=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
